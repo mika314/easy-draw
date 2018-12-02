@@ -1,17 +1,17 @@
-#include "basic.hpp"
+#include "easy_draw.hpp"
 #include <chrono>
 #include <sdlpp/sdlpp.hpp>
 
 namespace
 {
   sdl::Init init{SDL_INIT_EVERYTHING};
-  sdl::Window win{"Basic", 64, 100, ScreenWidth, ScreenHeight, 0};
+  sdl::Window win{"Easy Draw", 64, 100, Width, Height, 0};
   sdl::Renderer rend{win.get(), -1, SDL_RENDERER_TARGETTEXTURE};
   sdl::Texture texture{rend.get(),
                        SDL_PIXELFORMAT_RGB24,
                        SDL_TEXTUREACCESS_TARGET,
-                       ScreenWidth,
-                       ScreenHeight};
+                       Width,
+                       Height};
   std::function<void(Point)> mouseLeftCb;
   std::function<void(Point)> mouseRightCb;
   std::function<void(Point)> mouseMoveCb;
@@ -89,6 +89,16 @@ void run() noexcept
   {
     rend.setTarget(texture.get());
     auto now = std::chrono::high_resolution_clock::now();
+    if (now < frameTime)
+    {
+      try
+      {
+        ev.wait(std::chrono::duration_cast<std::chrono::milliseconds>(frameTime - now).count());
+      }
+      catch (...)
+      {
+      }
+    }
     while (ev.poll())
       ;
     while (frameTime <= now)

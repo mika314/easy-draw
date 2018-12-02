@@ -1,2 +1,2 @@
 #pragma once
-enum { ScreenWidth = 1280, ScreenHeight = 720 };
+enum { Width = 1280, Height = 720 };

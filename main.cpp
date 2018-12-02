@@ -1,4 +1,4 @@
-#include "basic.hpp"
+#include "easy_draw.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -26,7 +26,7 @@ int main()
   });
   int c = 0;
   onFrame([&c, &points]() {
-    fillRect({{0, 0}, {ScreenWidth, ScreenHeight}}, Color::Black, 0x40);
+    fillRect({{0, 0}, {Width, Height}}, Color::Black, 0x40);
     for (auto &p : points)
     {
       fillRect({{p.p.x - 2, p.p.y - 2}, {p.p.x + 2, p.p.y + 2}}, p.c);
@@ -36,14 +36,14 @@ int main()
     }
     points.erase(std::remove_if(std::begin(points),
                                 std::end(points),
-                                [](const P &p) { return p.p.y > ScreenHeight || p.p.y < 0; }),
+                                [](const P &p) { return p.p.y > Height || p.p.y < 0; }),
                  std::end(points));
 
     if (c++ % 20 == 0)
     {
       for (int i = 0; i < 36; ++i)
         points.emplace_back(
-          Point{ScreenWidth / 2, ScreenHeight / 2},
+          Point{Width / 2, Height / 2},
           Velosity{cosf(i * 2 * 3.1415926f / 36), sinf(i * 2 * 3.1415926f / 36) - 1.0f},
           fromRgb(rand() % 0x100, rand() % 0x100, rand() % 0x100));
     }
