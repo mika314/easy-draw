@@ -146,6 +146,9 @@ void run() noexcept
     rend.setTarget(nullptr);
     rend.copy(texture.get(), nullptr, nullptr);
     rend.present();
+    now = std::chrono::high_resolution_clock::now();
+    using namespace std::chrono_literals;
+    drawTime = now + 16667us;
   }
 }
 
