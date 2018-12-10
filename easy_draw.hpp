@@ -1,6 +1,7 @@
 #pragma once
 #include "color.hpp"
 #include "consts.hpp"
+#include "keys.hpp"
 #include "point.hpp"
 #include "rect.hpp"
 #include <functional>
@@ -19,3 +20,4 @@ void onMouseMove(std::function<void(Point)>) noexcept;
 void onMouseMoveLeft(std::function<void(Point)>) noexcept;
 void onMouseMoveRight(std::function<void(Point)>) noexcept;
 void onFrame(std::function<void()>) noexcept;
+bool isPressed(Keys) noexcept;

@@ -1,0 +1,7 @@
+[[library]]
+type="file"
+name="easy_draw"
+path="../.."
+includes=[
+  "easy_draw/easy_draw.hpp"
+]

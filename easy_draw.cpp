@@ -20,6 +20,7 @@ namespace
   std::function<void()> frameCb;
   std::chrono::high_resolution_clock::time_point drawTime{
     std::chrono::high_resolution_clock::now()};
+  std::vector<bool> keys;
 
   constexpr void lock() noexcept {}
   void unlock() noexcept
@@ -52,6 +53,19 @@ namespace
     Locker() noexcept { lock(); }
     ~Locker() noexcept { unlock(); }
   };
+
+  void setKey(Keys value)
+  {
+    if (static_cast<size_t>(value) >= keys.size())
+      keys.resize(static_cast<size_t>(value) + 1);
+    keys[static_cast<size_t>(value)] = true;
+  }
+  void resetKey(Keys value)
+  {
+    if (static_cast<size_t>(value) >= keys.size())
+      return;
+    keys[static_cast<size_t>(value)] = false;
+  }
 } // namespace
 
 void run() noexcept
@@ -82,6 +96,28 @@ void run() noexcept
       mouseMoveLeftCb(Point{1.0f * e.x, 1.0f * e.y});
     if ((e.state & SDL_BUTTON_RMASK) != 0 && mouseMoveRightCb)
       mouseMoveRightCb(Point{1.0f * e.x, 1.0f * e.y});
+  };
+  ev.keyDown = [](const SDL_KeyboardEvent &e) {
+    switch (e.keysym.sym)
+    {
+    case SDLK_LEFT: setKey(Keys::Left); break;
+    case SDLK_RIGHT: setKey(Keys::Right); break;
+    case SDLK_UP: setKey(Keys::Up); break;
+    case SDLK_DOWN: setKey(Keys::Down); break;
+    case SDLK_RETURN: setKey(Keys::Enter); break;
+    case SDLK_SPACE: setKey(Keys::Space); break;
+    }
+  };
+  ev.keyUp = [](const SDL_KeyboardEvent &e) {
+    switch (e.keysym.sym)
+    {
+    case SDLK_LEFT: resetKey(Keys::Left); break;
+    case SDLK_RIGHT: resetKey(Keys::Right); break;
+    case SDLK_UP: resetKey(Keys::Up); break;
+    case SDLK_DOWN: resetKey(Keys::Down); break;
+    case SDLK_RETURN: resetKey(Keys::Enter); break;
+    case SDLK_SPACE: resetKey(Keys::Space); break;
+    }
   };
   auto frameTime = std::chrono::high_resolution_clock::now();
   using namespace std::chrono_literals;
@@ -185,4 +221,11 @@ void onMouseMoveRight(std::function<void(Point)> cb) noexcept
 void onFrame(std::function<void()> cb) noexcept
 {
   frameCb = std::move(cb);
+}
+
+bool isPressed(Keys value) noexcept
+{
+  if (static_cast<size_t>(value) >= keys.size())
+    return false;
+  return keys[static_cast<size_t>(value)];
 }
