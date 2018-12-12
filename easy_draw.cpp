@@ -1,5 +1,7 @@
 #include "easy_draw.hpp"
+#include <cassert>
 #include <chrono>
+#include <memory>
 #include <sdlpp/sdlpp.hpp>
 
 namespace
@@ -7,11 +9,7 @@ namespace
   sdl::Init init{SDL_INIT_EVERYTHING};
   sdl::Window win{"Easy Draw", 64, 100, Width, Height, 0};
   sdl::Renderer rend{win.get(), -1, SDL_RENDERER_TARGETTEXTURE};
-  sdl::Texture texture{rend.get(),
-                       SDL_PIXELFORMAT_RGB24,
-                       SDL_TEXTUREACCESS_TARGET,
-                       Width,
-                       Height};
+  sdl::Texture texture{rend.get(), SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, Width, Height};
   std::function<void(Point)> mouseLeftCb;
   std::function<void(Point)> mouseRightCb;
   std::function<void(Point)> mouseMoveCb;
@@ -194,6 +192,60 @@ void fillRect(const Rect &rect, Color color, int alpha) noexcept
   r.w = rect.p2.x - rect.p1.x;
   r.h = rect.p2.y - rect.p1.y;
   rend.fillRect(&r);
+}
+
+namespace
+{
+  struct Texture
+  {
+  private:
+    std::unique_ptr<sdl::Surface> tmpSurf;
+
+  public:
+    Texture(const std::string &fileName) noexcept(false)
+      : tmpSurf(std::make_unique<sdl::Surface>(fileName)),
+        texture(rend.get(), tmpSurf.get()->get()),
+        width(tmpSurf.get()->get()->w),
+        height(tmpSurf.get()->get()->h)
+    {
+      tmpSurf = nullptr;
+    }
+    sdl::Texture texture;
+    int width;
+    int height;
+  };
+  std::unordered_map<std::string, Texture> texLib;
+  const Texture &loadTexture(const std::string &fileName) noexcept(false)
+  {
+    auto iter = texLib.find(fileName);
+    if (iter != std::end(texLib))
+      return iter->second;
+    bool tmp;
+    std::tie(iter, tmp) = texLib.emplace(fileName, Texture{fileName});
+    assert(tmp);
+    return iter->second;
+  }
+} // namespace
+
+void img(const std::string &fileName,
+         const Point &dest,
+         float scale,
+         float rotate,
+         const Point &center) noexcept(false)
+{
+  Locker l;
+  auto &tex = loadTexture(fileName);
+  const SDL_Rect sdlDest{static_cast<int>(dest.x),
+                         static_cast<int>(dest.y),
+                         static_cast<int>(tex.width * scale),
+                         static_cast<int>(tex.height * scale)};
+  const SDL_Point sdlCenter{static_cast<int>(center.x), static_cast<int>(center.y)};
+  rend.copyEx(const_cast<SDL_Texture *>(tex.texture.get()),
+              nullptr,
+              &sdlDest,
+              rotate,
+              &sdlCenter,
+              SDL_FLIP_NONE);
 }
 
 void onMouseLeft(std::function<void(Point)> cb) noexcept
