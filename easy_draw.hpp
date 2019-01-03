@@ -4,6 +4,8 @@
 #include "keys.hpp"
 #include "point.hpp"
 #include "rect.hpp"
+#include "sprite.hpp"
+#include "turtle.hpp"
 #include <functional>
 #include <string>
 

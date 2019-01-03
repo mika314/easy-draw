@@ -1,4 +1,7 @@
 #include "easy_draw.hpp"
+
+#include "texture.hpp"
+#include "turtle_img.hpp"
 #include <cassert>
 #include <chrono>
 #include <memory>
@@ -19,6 +22,7 @@ namespace
   std::chrono::high_resolution_clock::time_point drawTime{
     std::chrono::high_resolution_clock::now()};
   std::vector<bool> keys;
+  std::vector<std::reference_wrapper<Sprite>> sprites;
 
   constexpr void lock() noexcept {}
   void unlock() noexcept
@@ -63,6 +67,25 @@ namespace
     if (static_cast<size_t>(value) >= keys.size())
       return;
     keys[static_cast<size_t>(value)] = false;
+  }
+
+  void addSprite(Sprite &sprite) noexcept { sprites.push_back(sprite); }
+
+  void removeSprite(Sprite &sprite) noexcept
+  {
+    sprites.erase(std::remove_if(std::begin(sprites),
+                                 std::end(sprites),
+                                 [&sprite](const std::reference_wrapper<Sprite> &x) {
+                                   return &sprite == &x.get();
+                                 }),
+                  std::end(sprites));
+  }
+
+  std::unique_ptr<sdl::Surface> loadSurf(const std::string &fileName)
+  {
+    if (fileName == "turtle")
+      return loadTurtle();
+    return std::make_unique<sdl::Surface>(fileName);
   }
 } // namespace
 
@@ -143,6 +166,25 @@ void run() noexcept
     }
     rend.setTarget(nullptr);
     rend.copy(texture.get(), nullptr, nullptr);
+    for (const auto &sprite : sprites)
+    {
+      const auto &s = sprite.get();
+      if (!s.isVisible)
+        continue;
+
+      const SDL_Rect sdlDest{static_cast<int>(s.pos.x),
+                             static_cast<int>(s.pos.y),
+                             static_cast<int>(s.texture.get().width * s.scale),
+                             static_cast<int>(s.texture.get().height * s.scale)};
+      const SDL_Point sdlCenter{static_cast<int>(s.center.x),
+                                static_cast<int>(s.center.y)};
+      rend.copyEx(const_cast<SDL_Texture *>(s.texture.get().texture.get()),
+                  nullptr,
+                  &sdlDest,
+                  s.rotate,
+                  &sdlCenter,
+                  SDL_FLIP_NONE);
+    }
     rend.present();
     now = std::chrono::high_resolution_clock::now();
     using namespace std::chrono_literals;
@@ -196,24 +238,6 @@ void fillRect(const Rect &rect, Color color, int alpha) noexcept
 
 namespace
 {
-  struct Texture
-  {
-  private:
-    std::unique_ptr<sdl::Surface> tmpSurf;
-
-  public:
-    Texture(const std::string &fileName) noexcept(false)
-      : tmpSurf(std::make_unique<sdl::Surface>(fileName)),
-        texture(rend.get(), tmpSurf.get()->get()),
-        width(tmpSurf.get()->get()->w),
-        height(tmpSurf.get()->get()->h)
-    {
-      tmpSurf = nullptr;
-    }
-    sdl::Texture texture;
-    int width;
-    int height;
-  };
   std::unordered_map<std::string, Texture> texLib;
   const Texture &loadTexture(const std::string &fileName) noexcept(false)
   {
@@ -283,4 +307,27 @@ bool isPressed(Keys value) noexcept
   if (static_cast<size_t>(value) >= keys.size())
     return false;
   return keys[static_cast<size_t>(value)];
+}
+
+Texture::Texture(const std::string &fileName) noexcept(false)
+  : tmpSurf(loadSurf(fileName)),
+    texture(rend.get(), tmpSurf.get()->get()),
+    width(tmpSurf.get()->get()->w),
+    height(tmpSurf.get()->get()->h)
+{
+  tmpSurf = nullptr;
+}
+
+Sprite::Sprite(const std::string &fileName)
+  : texture(loadTexture(fileName)),
+    width(texture.get().width),
+    height(texture.get().height),
+    center{Point{width / 2.0f, height / 2.0f}}
+{
+  addSprite(*this);
+}
+
+Sprite::~Sprite()
+{
+  removeSprite(*this);
 }
