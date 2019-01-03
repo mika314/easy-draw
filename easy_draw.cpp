@@ -5,6 +5,8 @@
 #include <cassert>
 #include <chrono>
 #include <memory>
+#include <vector>
+#include <unordered_map>
 #include <sdlpp/sdlpp.hpp>
 
 namespace
