@@ -2,12 +2,13 @@
 
 #include "texture.hpp"
 #include "turtle_img.hpp"
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <memory>
-#include <vector>
-#include <unordered_map>
 #include <sdlpp/sdlpp.hpp>
+#include <unordered_map>
+#include <vector>
 
 namespace
 {
